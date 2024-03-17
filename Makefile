@@ -1,20 +1,17 @@
 NAME		= ft_ping
 CC			= cc
-# FLAGS		= -Werror -Wextra -Wall
-FLAGS = 
+FLAGS		= -Werror -Wextra -Wall
 SRCS		=  src/ft_ping.c
-
-OBJ = $(addprefix obj/, $(SRC:.c=.o))
-
-HEADER = includes/ft_ping.h
-
-$(NAME): $(OBJS) $(HEADER)
-	$(CC) ${FLAGS} $(SRCS) -o $(NAME)
-
-%.o : %.c
-	$(CC) $(FLAGS) -o $@ -c $<
+OBJS		= $(SRCS:.c=.o)
+HEADER		= includes/ft_ping.h
 
 all: $(NAME)
+
+$(NAME): $(OBJS)
+	$(CC) $(OBJS) -o $(NAME)
+
+%.o: %.c $(HEADER)
+	$(CC) -c $< -o $@
 
 clean:
 	rm -f $(OBJS)
@@ -23,3 +20,5 @@ fclean: clean
 	rm -f $(NAME)
 
 re: fclean all
+
+.PHONY: all clean fclean re
