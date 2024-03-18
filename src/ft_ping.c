@@ -41,11 +41,10 @@ int dns_lookup(t_ping *ping, char *hostname) {
 
     errcode = getaddrinfo(hostname, NULL, &hints, &res);
     if (errcode != 0) {
-        perror("getaddrinfo");
+		fprintf(stderr, "failed to resolve hostname: %s\n", gai_strerror(errcode));
         return 1;
     }
 
-    printf("Host: %s\n", hostname);
     while (res) {
         inet_ntop(res->ai_family, res->ai_addr->sa_data, addrstr, 100);
 
@@ -58,8 +57,6 @@ int dns_lookup(t_ping *ping, char *hostname) {
                 break;
         }
         inet_ntop(res->ai_family, ptr, addrstr, 100);
-        printf("IPv%d address: %s (%s)\n", res->ai_family == PF_INET6 ? 6 : 4,
-               addrstr, res->ai_canonname ? res->ai_canonname : "N/A");
         res = res->ai_next;
     }
 
@@ -67,7 +64,7 @@ int dns_lookup(t_ping *ping, char *hostname) {
     ping->dest_addr.sin_port = 0;
     ping->dest_addr.sin_addr.s_addr = inet_addr(addrstr);
     if (ping->dest_addr.sin_addr.s_addr == INADDR_NONE) {
-        perror("inet_addr failed");
+        fprintf(stderr, "invalid address\n");
         return 1;
     }
 
@@ -83,7 +80,7 @@ int init_ping(t_ping *ping, char *hostname) {
     ping->seq = 0; // sequence number of the packet (starts at 0)
     ping->sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP); // create a raw socket
     if (ping->sockfd < 0) {
-        perror("socket");
+		fprintf(stderr, "failed to create socket.\n");
         return 1;
     }
 
@@ -108,7 +105,7 @@ void send_packet(t_ping *ping) {
 
 	// send the packet
 	if (sendto(ping->sockfd, packet, PACKET_SIZE, 0, (struct sockaddr *) &ping->dest_addr, ping->dest_addr_len) <= 0) {
-		perror("sendto");
+		fprintf(stderr, "failed to send packet\n");
 	}
 }
 
@@ -119,7 +116,8 @@ void receive_packet(t_ping *ping) {
 
 	// receive the packet
 	if (recvfrom(ping->sockfd, packet, PACKET_SIZE, 0, (struct sockaddr *) &from, &fromlen) <= 0) {
-		perror("recvfrom");
+		fprintf(stderr, "failed to receive packet\n");
+		return;
 	}
 
 	// parse the packet
@@ -146,6 +144,8 @@ int main(int ac, char **av) {
 	if (init_ping(&ping, av[1])) {
 		return 1;
 	}
+
+	printf("PING %s (%s) 56(84) bytes of data.\n", av[1], inet_ntoa(ping.dest_addr.sin_addr));
 
 	for (int i = 0; i < 3; i++) {
 		// send the packet
