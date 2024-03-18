@@ -8,10 +8,10 @@ HEADER		= includes/ft_ping.h
 all: $(NAME)
 
 $(NAME): $(OBJS)
-	$(CC) $(OBJS) -o $(NAME)
+	$(CC) -std=gnu17 $(OBJS) -o $(NAME)
 
 %.o: %.c $(HEADER)
-	$(CC) -c $< -o $@
+	$(CC) -std=gnu17 -c $< -o $@
 
 clean:
 	rm -f $(OBJS)
