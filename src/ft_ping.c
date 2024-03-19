@@ -16,15 +16,16 @@ typedef struct s_ping
 
 uint16_t checksum(uint16_t *buf, int len) {
 	uint32_t sum = 0;
+
 	while (len > 1) {
 		sum += *buf++;
 		len -= 2;
 	}
-	if (len == 1) {
-		sum += *(uint8_t *) buf;
-	}
+
+	if (len == 1) sum += *(uint8_t *) buf;
 	sum = (sum >> 16) + (sum & 0xffff);
 	sum += (sum >> 16);
+
 	return (uint16_t) ~sum;
 }
 
@@ -69,6 +70,8 @@ int dns_lookup(t_ping *ping, char *hostname) {
     }
 
     ping->dest_addr_len = sizeof(ping->dest_addr);
+
+	freeaddrinfo(res);
 
     return 0;
 }
@@ -134,6 +137,10 @@ void receive_packet(t_ping *ping) {
 	printf("%d bytes from %s: icmp_seq=%d ttl=%d time=%.3Lf ms\n", ntohs(ip->ip_len), inet_ntoa(from.sin_addr), icmp->icmp_seq, ip->ip_ttl, rtt);
 }
 
+void cleanup_ping(t_ping *ping) {
+	close(ping->sockfd);
+}
+
 int main(int ac, char **av) {
 	if (ac < 2) {
 		printf("Usage: %s <hostname>\n", av[0]);
@@ -155,5 +162,6 @@ int main(int ac, char **av) {
 		sleep(1); // wait for 1 second
 	}
 
+	cleanup_ping(&ping);
 	return 0;
 }
